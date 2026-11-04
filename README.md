@@ -24,6 +24,8 @@ y la electrónica todavía no están diseñados.
 
 ## Imprimir y armar
 
+Impresora necesaria: cama de al menos **205 × 205 mm** y altura de al menos **195 mm** (la placa y el anillo miden 203 mm; las columnas, 193 mm de alto).
+
 Los archivos listos para el slicer y la guía paso a paso (ajustes, pausas para meter los imanes, polaridad, orden de impresión
 y armado) están en [`imprimir/`](imprimir/INSTRUCCIONES.md).
 
