@@ -1,0 +1,13 @@
+# Temporales de las verificaciones (contienen rutas locales)
+blender/tmp/
+
+# Copias de seguridad de Blender y cachés de Python
+*.blend1
+*.blend2
+__pycache__/
+
+# Salidas sueltas de OpenSCAD
+*.echo
+
+# Notas de trabajo locales (no se publican)
+CLAUDE.md
