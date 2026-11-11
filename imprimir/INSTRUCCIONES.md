@@ -5,7 +5,7 @@ Si se cambia algo del diseño, regenerarlos con `python exportar_impresion.py` d
 
 | Archivo | Copias | Tamaño (mm) | Soportes | Pausas para imanes |
 |---|---|---|---|---|
-| 01_plantilla_prueba.stl | 1 | 185 × 185 × 2 | no | — |
+| 01_plantilla_prueba.stl | 1 | 192 × 192 × 2 | no | — |
 | 02_probeta_calibracion.stl | 1 | 84 × 30 × 8 | no | z = 7.2 (5 imanes) |
 | 03_portamatriz_lateral_A.stl | 3 | 185 × 189 × 22 | sí, árbol, en todas partes | z = 13.8 (8 imanes) |
 | 04_portamatriz_lateral_B.stl | 1 | 185 × 189 × 22 | sí, árbol, en todas partes | z = 13.8 (8 imanes) |
@@ -53,6 +53,9 @@ Si un imán queda al revés, empuja la cara hacia fuera en vez de sujetarla.
 
 1. **01 Plantilla.** Apoyarla en la cara trasera de una matriz A y de la B: un tornillo original debe entrar por los 14 agujeros
    y la plantilla debe apoyar plana (si algo la levanta, hay un componente donde va el aro del portamatriz). Avisar si algo no encaja.
+   Los agujeros son ranuras cortas: empezar por los 4 tornillos del centro de cada lado y seguir hacia las esquinas.
+   Con todos puestos, pasar la uña por las **4 lengüetas**: deben quedar a ras del borde de la matriz. Si quedan cortas
+   (≈1 mm por dentro del borde), la impresora imprime más pequeño de lo debido: avisar antes de imprimir lo grande.
 2. **02 Probeta.** Comprobar qué hueco sujeta mejor un imán, qué agujero va bien para el inserto M3, en cuál pasa
    el tornillo original con un poco de juego (1.3–1.6 mm) y el pasador. Avisar del resultado: con eso se ajusta el diseño antes de lo grande.
 3. **03 Un portamatriz lateral A** y probarlo con una matriz A: que apoye plano, que entren los 14 tornillos y que los conectores queden libres.

@@ -49,7 +49,10 @@ pcb_screw_d = 1.0;      // usuario: tornillo original (desde atrás)
 // Foto del usuario (03-nov, huecos marcados en verde en la base original): anillo de 4 agujeros por lado (esquinas incluidas)
 // con separación de 60 mm entre centros (dato del usuario, aprox.) => borde a (192 - 3*60)/2 = 6 mm, + 2 en la viga central a la altura
 // de los agujeros intermedios (supuesto). Los insertos amarillos NO llevan tornillo. Verificar con la plantilla de prueba (view = part_template).
-screw_pitch = 60;
+// (11-nov) Prueba de la plantilla impresa con paso 60 sobre la matriz A: el 3.º agujero desviado ≈0.5 mm y el 4.º ≈1 mm, hacia fuera,
+// igual en los 4 lados. Con la misma cinta: esquina a esquina 179 mm en la matriz y 178 mm en la plantilla => la plantilla impresa
+// sale 1 mm más corta en 3 pasos. Se diseña con 181 mm (medida relativa: absorbe a la vez el error de la cinta y el de la impresora).
+screw_pitch = 181 / 3;           // 60.33
 screw_ring = [for (i = [0 : 3]) (panel_w - 3 * screw_pitch) / 2 + i * screw_pitch];
 screws_B_FOTO = concat([for (x = screw_ring, y = [screw_ring[0], screw_ring[3]]) [x, y]],               // bordes superior e inferior (4 + 4)
                        [for (y = [screw_ring[1], screw_ring[2]], x = [screw_ring[0], screw_ring[3]]) [x, y]],  // laterales intermedios (2 + 2)
@@ -61,6 +64,9 @@ pcb_screw_len = 5;               // usuario (03-nov): largo del tornillo origina
 // Tolerancia de posición SIN arandelas: agujero de paso algo holgado (la cabeza de 2 mm apoya en su borde) + plantilla de prueba 1:1
 // para comprobar las posiciones antes de imprimir el portamatriz (view = part_template).
 screw_tol  = 0.25;               // error de posición que absorbe el agujero de paso, en cualquier dirección (mm)
+// (11-nov) Los agujeros son ranuras cortas orientadas hacia el centro de la matriz: un error de escala (paso mal medido, impresora que
+// encoge) desplaza cada agujero en esa dirección. Absorben ±(screw_slot + screw_tol) en dirección radial; la cabeza apoya igual que antes.
+screw_slot = 0.5;                // medio recorrido extra de la ranura en dirección radial (mm)
 // Aro bajo: placa plana pegada a la cara trasera de la PCB (como la base original) que recibe los tornillos que los separadores no alcanzan
 edge_out = 92.5;                 // borde exterior del aro (u, v): deja ≥ 1 mm a la aleta diagonal de la columna de esquina
 edge_in  = 79;                   // borde interior del aro; entre edge_in y hl el aro se une al marco con muros
@@ -68,6 +74,14 @@ link_len = 16;                   // largo de cada muro de enlace aro–marco
 link_pos = [0, 60, -60];         // posiciones de los muros en los lados izquierdo y derecho
 link_top_u = [27, -29.5];        // muros en los lados superior e inferior, entre las ventanas de conectores (el de -29.5 sujeta el trozo de barra que dejan las ventanas de la variante A)
 edge_t = pcb_screw_grip_TBD;     // espesor del aro bajo = agarre: la cabeza apoya en su cara superior
+// (11-nov) Prueba de la plantilla en la matriz A: el aro (3.5–17 mm del borde) quedaba sobre componentes. Usuario: empiezan a 15 mm
+// del borde y miden ≈ 3 mm. El aro se escalona: franja baja junto al borde (donde apoyan las cabezas), muro, y repisa elevada
+// sobre los componentes que lo une al marco. Todo lo que está a más de edge_free - edge_free_margin del borde queda por encima de edge_relief_h.
+edge_free = 15;                  // usuario: distancia del borde de la PCB a la que empiezan los componentes (cinta)
+edge_free_margin = 3;            // margen por la medida con cinta
+edge_comp_h = 3;                 // usuario: altura aproximada de esos componentes
+edge_low_w = 9;                  // ancho (desde el borde de la PCB) de la franja baja; ≥ 1.25 mm más que la ranura, para el destornillador
+                                 // (con 8.5 el escalón quedaba tangente a los separadores de la fila inferior: aristas no manifold)
 // Conectores [x, y, ancho, alto], vista trasera (HUB75 entrada, HUB75 salida, alimentación)
 conn_A_FOTO = [[30,140,14,36], [140,140,14,36], [ 95,150,16,22]];
 // B, alimentación: corregida el 03-nov con la foto (carcasa medida ≈ x 80–90, y 39–56 mm; antes y = 52–74). Caja algo mayor que la carcasa;
@@ -133,6 +147,9 @@ eps = 0.01;
 // ============================================================ DERIVADOS
 panel_t = pcb_t + led_h;                       // 2.5
 so      = comp_h + standoff_extra;             // separador PCB -> marco
+edge_relief_in = panel_w / 2 - (edge_free - edge_free_margin);   // desde aquí hacia dentro, nada toca la PCB por debajo de edge_relief_h
+edge_relief_h  = edge_comp_h + standoff_extra;                   // hueco sobre los componentes del borde
+edge_top       = edge_relief_h + edge_t;                         // altura del muro y de la repisa del aro sobre la PCB
 D       = panel_t + so + holder_t;             // profundidad hasta la cara trasera del portamatriz
 W       = panel_w + 2 * (gap_g + trim_t);      // lado exterior del cubo
 H       = W;                                   // cubo
@@ -164,6 +181,17 @@ screw_pass_d = pcb_screw_d + 2 * screw_tol;      // agujero de paso holgado: el 
 assert((pcb_screw_head_d - screw_pass_d) / 2 >= 0.2, str("La cabeza (", pcb_screw_head_d, " mm) apoya menos de 0.2 mm alrededor del agujero de paso (", screw_pass_d, " mm)"));
 assert(panel_t + pcb_screw_grip_TBD - pcb_screw_len <= led_h, "El tornillo no atraviesa la PCB: su punta queda por encima de ella");
 assert(edge_out < panel_w / 2 - 3, "El aro bajo debe quedar dentro de la PCB");
+// pared entre la ranura del tornillo más exterior y el borde del aro bajo (o de la plantilla)
+slot_wall = min([for (q = all_pts("A")) edge_out - (max(abs(q[0]), abs(q[1])) + screw_slot * max(abs(q[0]), abs(q[1])) / norm(q) + screw_pass_d / 2)]);
+assert(slot_wall >= 0.7, str("Queda poca pared (", slot_wall, " mm) entre la ranura de un tornillo y el borde del aro bajo"));
+slot_reach = max([for (q = all_pts("A")) let(m = max(abs(q[0]), abs(q[1]))) if (m > edge_relief_in)     // tornillos del borde: hasta dónde llega su ranura desde el borde
+                  panel_w / 2 - m + screw_slot * m / norm(q) + screw_pass_d / 2]);
+assert(edge_low_w - slot_reach >= 1.25, "La franja baja del aro es demasiado angosta para el destornillador");
+assert(panel_w / 2 - edge_low_w - edge_relief_in >= 2, "El muro del aro escalonado queda demasiado delgado");
+assert(edge_in < edge_relief_in, "La repisa del aro no llega por encima de los componentes del borde");
+echo(str("Aro escalonado: franja baja ", edge_low_w, " mm desde el borde, nada toca la PCB a más de ", edge_free - edge_free_margin,
+         " mm del borde (hueco de ", edge_relief_h, " mm sobre los componentes)"));
+echo(str("Ranuras de tornillo: ±", screw_slot + screw_tol, " mm hacia el centro, ±", screw_tol, " mm de lado; pared al borde del aro ", round(slot_wall * 100) / 100, " mm"));
 echo(str("== Cubo: ", W, " x ", W, " x ", H, " mm; moldura visible por cara ", gap_g + trim_t, " mm"));
 echo(str("== Profundidad matriz->estructura ", D, " mm; separador ", so, " mm; portamatriz ", 2 * hl, " mm"));
 echo(str("== Holgura aleta-PCB: ", round(fin_gap_pcb * 100) / 100, " mm"));
@@ -172,7 +200,7 @@ if (is_undef(center_hole_d_TBD)) echo("PENDIENTE: agujero central (eje/slip ring
 if (is_undef(rot_bolt_circle_TBD)) echo("PENDIENTE: interfaz del soporte de giro sin definir -> sin taladros");
 echo("PENDIENTE: agarre del tornillo original (pcb_screw_grip_TBD); posiciones y cabeza vienen de foto/usuario: verificar con la plantilla de prueba");
 echo(str("Tolerancia de posición de los tornillos: ±", screw_tol, " mm (agujero de paso ", screw_pass_d, " mm)"));
-echo("PENDIENTE: confirmar que la franja de ", panel_w / 2 - edge_in, " mm junto al borde de la PCB no tiene componentes (se ve libre en la foto de la variante A; B sin comprobar)");
+echo("PENDIENTE: confirmar en la variante B que los componentes del borde empiezan a ≥ ", edge_free, " mm (medido en A el 11-nov)");
 module bed_check(name, s) {
     if (is_undef(bed_TBD)) echo(str("Tamaño de ", name, ": ", s[0], " x ", s[1], " x ", s[2], " mm (impresora sin elegir)"));
     else if (s[0] > bed_TBD[0] || s[1] > bed_TBD[1] || s[2] > bed_TBD[2])
@@ -232,6 +260,12 @@ function ring_pts(v, is_top) =
     let(pts = holder_pts(v, is_top))
     [for (q = all_pts(v)) if (len([for (r = pts) if (norm(r - q) < 0.01) 1]) == 0) q];
 
+// Agujero de tornillo de la PCB en q = [u, v] (desde z = 0, altura h): ranura de diámetro d orientada hacia el centro de la matriz
+module screw_slot_hole(q, d, h) {
+    r = norm(q) > 0.01 ? q / norm(q) : [0, 0];
+    hull() for (s = [-1, 1]) translate([q[0] + s * screw_slot * r[0], q[1] + s * screw_slot * r[1], 0]) cylinder(d = d, h = h, $fn = 24);
+}
+
 // Marcadores (solo visualización): los 14 tornillos de la PCB; altos = en separador del marco, bajos = en el aro bajo
 module screw_marks(v, is_top) {
     for (q = holder_pts(v, is_top)) translate([q[0], q[1], panel_t]) cylinder(d = 3, h = D - panel_t + 3, $fn = 16);
@@ -287,15 +321,23 @@ module holder(v = "A", is_top = false) {
                 cylinder(d = 6, h = so + eps);
                 translate([0, 0, so]) cylinder(d = 11, h = holder_t);
             }
-            // aro bajo: placa plana sobre la cara trasera de la PCB (como la base original) que recibe los tornillos del contorno
-            translate([0, 0, panel_t]) linear_extrude(edge_t) difference() {
-                square(2 * edge_out, center = true);
-                square(2 * edge_in, center = true);
-                for (c = conns_of(v)) translate([back2u(c[0] + c[2]) - conn_margin, back2v(c[1]) - conn_margin])
-                    square([c[2] + 2 * conn_margin, c[3] + 2 * conn_margin]);
+            // aro bajo, escalonado (ver edge_free): franja baja junto al borde que recibe los tornillos del contorno (la cabeza apoya
+            // en su cara superior, como en la base original), muro, y repisa elevada sobre los componentes del borde
+            translate([0, 0, panel_t]) difference() {
+                linear_extrude(edge_top) difference() {
+                    square(2 * edge_out, center = true);
+                    square(2 * edge_in, center = true);
+                    for (c = conns_of(v)) translate([back2u(c[0] + c[2]) - conn_margin, back2v(c[1]) - conn_margin])
+                        square([c[2] + 2 * conn_margin, c[3] + 2 * conn_margin]);
+                }
+                translate([0, 0, edge_t]) linear_extrude(edge_top) difference() {     // franja baja: solo edge_t de alto
+                    square(2 * edge_out + 2, center = true);
+                    square(2 * (panel_w / 2 - edge_low_w), center = true);
+                }
+                translate([0, 0, -1]) linear_extrude(edge_relief_h + 1) square(2 * edge_relief_in, center = true);   // hueco sobre los componentes
             }
-            // muros de enlace aro-marco (entre edge_in y el borde del marco)
-            translate([0, 0, panel_t]) linear_extrude(so + eps) {
+            // muros de enlace aro-marco (entre edge_in y el borde del marco), elevados sobre los componentes
+            translate([0, 0, panel_t + edge_relief_h]) linear_extrude(so - edge_relief_h + eps) {
                 for (s = link_pos, sx = [-1, 1])        // lados izquierdo y derecho
                     translate([sx * (edge_in + hl) / 2 - (hl - edge_in) / 2, s - link_len / 2]) square([hl - edge_in, link_len]);
                 for (sy = [-1, 1], tu = link_top_u)     // lados superior e inferior: muros fuera de las ventanas de conectores
@@ -315,11 +357,11 @@ module holder(v = "A", is_top = false) {
             }
         }
         // tornillos originales: paso holgado (absorbe screw_tol); la cabeza apoya en el escalón a panel_t + agarre
-        for (p = pts) translate([p[0], p[1], 0]) {
-            cylinder(d = screw_pass_d, h = w1 + 1);
-            translate([0, 0, panel_t + pcb_screw_grip_TBD]) cylinder(d = pcb_screw_head_d + 0.4, h = w1);
+        for (p = pts) {
+            screw_slot_hole(p, screw_pass_d, w1 + 1);
+            translate([0, 0, panel_t + pcb_screw_grip_TBD]) screw_slot_hole(p, pcb_screw_head_d + 0.4, w1);
         }
-        for (p = rpts) translate([p[0], p[1], 0]) cylinder(d = screw_pass_d, h = panel_t + edge_t + 1);   // en el aro la cabeza apoya en su cara superior
+        for (p = rpts) screw_slot_hole(p, screw_pass_d, panel_t + edge_t + 1);   // en el aro la cabeza apoya en su cara superior
         // ventanas de conectores (el cable sale hacia el interior)
         for (c = conns_of(v)) translate([back2u(c[0] + c[2]) - conn_margin, back2v(c[1]) - conn_margin, panel_t + 1])
             cube([c[2] + 2 * conn_margin, c[3] + 2 * conn_margin, 30]);
@@ -335,14 +377,17 @@ module holder(v = "A", is_top = false) {
 // =============================================================================
 //  PLANTILLA DE PRUEBA 1:1 — se apoya sobre la cara trasera de la PCB para comprobar que los 14 agujeros coinciden
 //  antes de imprimir el portamatriz (un tornillo original debe entrar por cada agujero). Deja libres los conectores.
+//  El marco solo ocupa la franja libre de componentes del borde (como la parte que apoya del aro escalonado).
+//  4 lengüetas llegan exactamente al borde de la PCB: si quedan cortas, la impresora imprime más pequeño (≈1 mm corta = 1 %).
 // =============================================================================
 module screw_template(v = "B") {
     difference() {
         linear_extrude(2) union() {
-            difference() { square(2 * edge_out, center = true); square(2 * edge_in, center = true); }
+            difference() { square(2 * edge_out, center = true); square(2 * edge_relief_in, center = true); }
             translate([-7, -edge_out]) square([14, 2 * edge_out]);        // viga central
+            for (a = [0 : 90 : 270]) rotate(a) translate([edge_out - 1, -5]) square([panel_w / 2 - edge_out + 1, 10]);   // lengüetas al borde
         }
-        for (q = all_pts(v)) translate([q[0], q[1], -1]) cylinder(d = screw_pass_d, h = 4, $fn = 24);
+        for (q = all_pts(v)) translate([0, 0, -1]) screw_slot_hole(q, screw_pass_d, 4);
         for (c = conns_of(v)) translate([back2u(c[0] + c[2]) - conn_margin, back2v(c[1]) - conn_margin, -1])
             cube([c[2] + 2 * conn_margin, c[3] + 2 * conn_margin, 4]);
     }
@@ -543,4 +588,4 @@ else if (view == "part_holder_side_B") translate([0, 0, -panel_t]) holder("B", f
 else if (view == "part_holder_top_A")  translate([0, 0, -panel_t]) holder("A", true);
 else if (view == "part_holder_top_B")  { translate([0, 0, -panel_t]) holder("B", true); bed_check("portamatriz superior", [2 * edge_out, 2 * edge_out, D - panel_t]); }
 else if (view == "part_calibration")   calibration_coupon();
-else if (view == "part_template")      { screw_template("B"); bed_check("plantilla de prueba", [2 * edge_out, 2 * edge_out, 2]); }
+else if (view == "part_template")      { screw_template("B"); bed_check("plantilla de prueba", [panel_w, panel_w, 2]); }
