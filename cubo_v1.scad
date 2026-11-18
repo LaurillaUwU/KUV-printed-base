@@ -20,7 +20,7 @@
 //       para cambiar una matriz hay que quitar antes la cara superior y el anillo
 //    c) 8 imanes portamatriz <-> estructura (estabilizan, eliminan vibración)
 //    d) 1 tornillo M3 de seguridad en la parte alta, apretado desde el interior
-//  MATRIZ SUPERIOR: gravedad + 2 pasadores integrados + 8 imanes. El giro no puede
+//  MATRIZ SUPERIOR: gravedad + 2 pasadores integrados + 16 imanes. El giro no puede
 //  levantarla; solo se retira tirando hacia arriba con la mano.
 //
 //  SUFIJOS:  _TBD = pendiente de medir/elegir (valor marcador, NO usar para fabricar)
@@ -29,7 +29,7 @@
 // =============================================================================
 
 /* [Vista] */
-view = "assembly"; // [assembly, exploded, section, structure_only, part_bottom_plate, part_corner_column, part_top_ring, part_holder_side_A, part_holder_side_B, part_holder_top_A, part_holder_top_B, part_calibration, part_template]
+view = "assembly"; // [assembly, exploded, section, structure_only, part_bottom_plate, part_corner_column, part_top_ring, part_holder_side_A, part_holder_side_B, part_holder_top_A, part_holder_top_B, part_calibration, part_template_A, part_template_B]
 explode = 60;
 show_panels = true;
 show_pi = true;
@@ -67,6 +67,7 @@ screw_tol  = 0.25;               // error de posición que absorbe el agujero de
 // (11-nov) Los agujeros son ranuras cortas orientadas hacia el centro de la matriz: un error de escala (paso mal medido, impresora que
 // encoge) desplaza cada agujero en esa dirección. Absorben ±(screw_slot + screw_tol) en dirección radial; la cabeza apoya igual que antes.
 screw_slot = 0.5;                // medio recorrido extra de la ranura en dirección radial (mm)
+screw_well_d = 3.6;              // pozo sobre la cabeza en los separadores: varilla de destornillador ≤ 3.4 mm
 // Aro bajo: placa plana pegada a la cara trasera de la PCB (como la base original) que recibe los tornillos que los separadores no alcanzan
 edge_out = 92.5;                 // borde exterior del aro (u, v): deja ≥ 1 mm a la aleta diagonal de la columna de esquina
 edge_in  = 79;                   // borde interior del aro; entre edge_in y hl el aro se une al marco con muros
@@ -92,7 +93,8 @@ conn_margin = 6;                 // holgura alrededor de cada conector y su cabl
 // variante A) y ya no hacen falta porque la PCB queda sujeta por sus 14 tornillos, incluidos 2 en el centro.
 
 /* [Diseño — ajustables] */
-gap_g     = 0.4;    // holgura matriz–moldura (calibrar)
+gap_g     = 0.8;    // holgura matriz–moldura. (12-nov) Antes 0.4: no dejaba margen si la impresora imprime un 0.5 % pequeño
+                    // (la abertura quedaba por debajo de 192), y la cara colgada de sus uñas (0.4 mm más abajo) apoyaba el borde en el labio
 trim_t    = 5;      // ancho visible de la moldura en cada cara, además de gap_g
 mold_leg  = 2;      // espesor del ala de la moldura (cara exterior a ras de los LED)
 fin_t     = 3;      // aleta diagonal que une moldura y poste
@@ -108,6 +110,7 @@ rail_h_bottom = 18; // altura del riel inferior sobre la placa
 rail_top_len  = 33; // cuánto baja el riel superior desde el anillo
 hook_w    = 16;
 hook_drop = 4;      // cuánto baja la uña por detrás del riel
+hook_clear = 0.7;   // holgura uña–riel (la cara de la uña que mira al riel se imprime sobre soportes)
 clear     = 0.4;    // holgura general entre piezas
 vent_slot_w = 4;    // ranuras de ventilación (no pasa un dedo)
 peg_d     = 4;      // pasadores del panel superior
@@ -117,11 +120,15 @@ peg_h     = 4;
 magnet_d = 5;  magnet_h = 2;     // usuario: 5 x 2, unión imán-imán
 magnet_clear_d = 0.2;            // calibrar con la probeta
 magnet_skin = 0.6;               // piel que deja el imán cautivo (pausa de impresión)
-insert_d = 4.0;  insert_len = 5.7;   // inserto térmico M3 — confirmar con el inserto comprado
-m3_clear = 3.4;  m3_head_d = 6.2;
+mag_boss_h = 4;                  // refuerzo bajo cada imán del portamatriz, medido desde su cara trasera
+// (12-nov) Sin insertos térmicos: el tornillo de seguridad también rosca en el plástico (ver safety_len)
+m3_tap_d = 2.6;  m3_tap_len = 7;     // agujero guía para que el M3 rosque directamente en el plástico (extremos de las columnas)
+m3_clear = 3.6;  m3_head_d = 6.2;   // 3.6: los agujeros impresos salen algo pequeños y hay que alinear 4 columnas con el anillo a la vez
+safety_hole_d = 3.8;  safety_slot = 1;             // paso del tornillo de seguridad en el riel: ±0.4 mm de lado; en vertical de -1.4 a +0.4 mm (ranura hacia abajo)
 m3_head_h = 3.0;                 // cabeza Allen M3 (ISO 4762); con cabeza abombada (ISO 7380, 1.65 mm) sobra
 plate_boss = 2;                  // engrosamiento de la placa bajo cada poste (la cabeza M3 va embutida por debajo)
 ring_boss  = 3;                  // engrosamiento del anillo bajo cada poste (la cabeza M3 va embutida por arriba)
+ring_mag_boss = 2;               // engrosamiento del anillo bajo cada imán de la cara superior (deja 2.2 mm bajo el imán)
 m3_seat_min = 2;                 // plástico mínimo bajo la cabeza M3 embutida
 
 /* [Interfaces pendientes (slip ring, eje, rodamiento)] */
@@ -165,16 +172,37 @@ post_c  = sk - post_s / 2;                     // centro del poste
 mag_lat = post_c - 1.5;                        // imanes de esquina sobre el poste (lejos de la aleta)
 rail_top_z = bottom_t + rail_h_bottom;
 z_mag   = [bottom_t + 8, zc, ring_z - 8];      // filas de imanes laterales (abajo, centro, arriba)
-z_screw = ring_z - 18;                         // tornillo de seguridad lateral
+// Tornillo de seguridad lateral. Antes en u = 0, z = ring_z - 18: quedaba justo debajo de la cruz del anillo y la llave en L no
+// podía bajar en vertical hasta él. Fuera de la cruz la llave baja por la ventana del anillo (|x| de 8 a 68 mm); el agujero
+// guía va en la barra superior del marco del portamatriz (v de vhi - frame_bar a vhi), no en la ventana del marco.
+// (18-nov) De u = -30 a u = 33: con las muescas del riel, en u = -30 el tornillo quedaba en un trozo de riel de 17 mm colgado
+// 33 mm del anillo (se podía romper por las capas antes que la rosca); en u = 33 está en el trozo largo (u de 7 a 46 en A).
+safety_u = 33;
+// (12-nov) El M3×8 atraviesa el riel (rail_t = 4) y entra 4 mm en el portamatriz: rosca en un agujero guía de 4 mm. Antes era un
+// inserto de 5.7 mm cuyo refuerzo bajaba a 7.8 mm de la PCB, por debajo del componente más alto (comp_h = 10).
+safety_len = 8 - rail_t;
+z_screw = ring_z - frame_bar / 2;              // centro de la barra superior del marco del portamatriz lateral
+col_z0  = bottom_t + plate_boss;               // base de la columna (poste, aleta y moldura): apoya en el engrosamiento de la placa
 hook_u  = [-40, 40];
-top_mag = [[-73,-73],[0,-mag_lat],[73,-73],[-mag_lat,0],[mag_lat,0],[-73,73],[0,mag_lat],[73,73]];
+// Imanes de la cara superior (portamatriz superior + cara de arriba del anillo). (11-nov) 16 en vez de 8: con 8 N35 la cara
+// aguantaba 2.6 veces su peso boca abajo; los 8 nuevos van en el perímetro, fuera de las ventanas de conectores de B, de los
+// pasadores y de los tornillos del anillo. En los lados izquierdo y derecho las ventanas HUB75 de B (v de 20 a 68) no son simétricas:
+// la de u < 0 llega a u = -74 y dejaba 0.3 mm de pared a un imán en (-76.9, 36.5); ese imán y su simétrico (giro de 180°)
+// pasan a los lados de arriba y abajo. Todo el conjunto es simétrico con un giro de 180° (la cara entra en las dos posiciones).
+// (12-nov) Esos dos, de u = ∓55 a u = ∓18: en ∓55 el refuerzo bajo el imán (en el anillo) quedaba justo encima del HUB75 de la
+// cara lateral de debajo y tapaba la salida de su cable.
+top_mag = concat([[-73,-73],[0,-mag_lat],[73,-73],[-mag_lat,0],[mag_lat,0],[-73,73],[0,mag_lat],[73,73]],
+                 [for (s = [-1, 1], t = [-1, 1]) [s * 36.5, t * mag_lat]],
+                 [[mag_lat, 36.5], [-mag_lat, -36.5], [-18, mag_lat], [18, -mag_lat]]);
 
 // ============================================================ VALIDACIONES
 // La aleta diagonal pasa entre la PCB de una cara y la de la vecina:
 fin_gap_pcb = (h2 - panel_t - panel_w / 2) / sqrt(2) - fin_t / 2;     // a la esquina trasera de la PCB
 assert(fin_gap_pcb >= 0.4, str("La aleta toca la PCB (", fin_gap_pcb, " mm): aumentar trim_t o reducir fin_t"));
 assert(mold_leg <= led_h + pcb_t, "La moldura no debe sobresalir del plano de los LED");
-assert(holder_v_hi > z_screw - zc + 6, "No cabe el tornillo de seguridad");
+assert(holder_v_hi >= z_screw - zc + 5, "No cabe el tornillo de seguridad");
+assert(min([for (u = [-mag_lat, 0, mag_top_u("A"), mag_lat]) norm([u - safety_u, z_mag[2] - z_screw])]) >= 10,
+       "El refuerzo del tornillo de seguridad choca con el de un imán superior");
 assert(bottom_t + plate_boss - (m3_head_h + 0.3) >= m3_seat_min, "Placa: queda poco plástico bajo la cabeza M3 embutida");
 assert(ring_t + ring_boss - (m3_head_h + 0.3) >= m3_seat_min, "Anillo: queda poco plástico bajo la cabeza M3 embutida");
 screw_pass_d = pcb_screw_d + 2 * screw_tol;      // agujero de paso holgado: el tornillo puede desviarse screw_tol en cualquier dirección
@@ -189,6 +217,12 @@ slot_reach = max([for (q = all_pts("A")) let(m = max(abs(q[0]), abs(q[1]))) if (
 assert(edge_low_w - slot_reach >= 1.25, "La franja baja del aro es demasiado angosta para el destornillador");
 assert(panel_w / 2 - edge_low_w - edge_relief_in >= 2, "El muro del aro escalonado queda demasiado delgado");
 assert(edge_in < edge_relief_in, "La repisa del aro no llega por encima de los componentes del borde");
+assert(screw_well_d / 2 >= pcb_screw_head_d / 2 + screw_slot + screw_tol, "El pozo no deja pasar la cabeza cuando el tornillo está al final de la ranura");
+assert((6 - screw_well_d) / 2 >= 1.2, "Pared del separador demasiado delgada alrededor del pozo");
+assert(trim_t < col_z0, "La columna debe empezar por encima del labio de la placa");
+assert(so + holder_t - mag_boss_h >= comp_h + 0.5, "El refuerzo de los imanes del portamatriz baja hasta los componentes de la matriz");
+assert(mag_boss_h - magnet_skin - magnet_h - 0.2 >= 0.8, "Queda poco plástico bajo el imán del portamatriz");
+assert(so + holder_t - safety_len >= comp_h + 0.5, "El refuerzo del tornillo de seguridad baja hasta los componentes de la matriz");
 echo(str("Aro escalonado: franja baja ", edge_low_w, " mm desde el borde, nada toca la PCB a más de ", edge_free - edge_free_margin,
          " mm del borde (hueco de ", edge_relief_h, " mm sobre los componentes)"));
 echo(str("Ranuras de tornillo: ±", screw_slot + screw_tol, " mm hacia el centro, ±", screw_tol, " mm de lado; pared al borde del aro ", round(slot_wall * 100) / 100, " mm"));
@@ -343,23 +377,28 @@ module holder(v = "A", is_top = false) {
                 for (sy = [-1, 1], tu = link_top_u)     // lados superior e inferior: muros fuera de las ventanas de conectores
                     translate([tu - link_len / 2, sy * (edge_in + hl) / 2 - (hl - edge_in) / 2]) square([link_len, hl - edge_in]);
             }
-            // refuerzos locales bajo los imanes y el inserto del tornillo de seguridad
+            // refuerzos locales bajo los imanes y el tornillo de seguridad
             // (d = 8.8: con 9 el cilindro rozaba justo el borde del marco en x = ±hl y dejaba aristas no manifold)
-            for (m = mags) translate([m[0], m[1], w1 - 5]) cylinder(d = 8.8, h = 5);
-            if (!is_top) translate([0, z_screw - zc, w1 - insert_len - 1]) cylinder(d = 10, h = insert_len + 1);
+            // (12-nov) desde w1 - 4 (antes w1 - 5): así terminan a 10.5 mm de la PCB, por encima del componente más alto (comp_h = 10),
+            // y dejan 1.2 mm de plástico bajo el imán
+            for (m = mags) translate([m[0], m[1], w1 - mag_boss_h]) cylinder(d = 8.8, h = mag_boss_h);
+            if (!is_top) translate([safety_u, z_screw - zc, w1 - safety_len]) cylinder(d = 10, h = safety_len);
             // uñas inferiores (cuelgan del riel inferior)
             if (!is_top) for (u = hook_u) {
                 vh = rail_top_z + clear - zc;
                 // zócalo que une la uña a la barra inferior del marco (antes quedaba flotando 3.4 mm por encima de la barra)
                 translate([u - hook_w / 2, vlo + frame_bar - 1, w0]) cube([hook_w, vh + 3 - (vlo + frame_bar - 1), holder_t]);
-                translate([u - hook_w / 2, vh, w1 - eps]) cube([hook_w, 3, rail_t + clear + 3]);
-                translate([u - hook_w / 2, vh - hook_drop, w1 + rail_t + clear]) cube([hook_w, hook_drop + 3, 3]);
+                // la uña se imprime sobre soportes: holgura al riel hook_clear (mayor que clear) para que las marcas no la cierren
+                translate([u - hook_w / 2, vh, w1 - eps]) cube([hook_w, 3, rail_t + hook_clear + 3]);
+                translate([u - hook_w / 2, vh - hook_drop, w1 + rail_t + hook_clear]) cube([hook_w, hook_drop + 3, 3]);
             }
         }
         // tornillos originales: paso holgado (absorbe screw_tol); la cabeza apoya en el escalón a panel_t + agarre
         for (p = pts) {
             screw_slot_hole(p, screw_pass_d, w1 + 1);
-            translate([0, 0, panel_t + pcb_screw_grip_TBD]) screw_slot_hole(p, pcb_screw_head_d + 0.4, w1);
+            // pozo hasta la cabeza: 11.5 mm de hondo; redondo y ancho para que entre la varilla del destornillador
+            // (antes 2.4 mm: no entraba un destornillador de precisión normal)
+            translate([p[0], p[1], panel_t + pcb_screw_grip_TBD]) cylinder(d = screw_well_d, h = w1, $fn = 24);
         }
         for (p = rpts) screw_slot_hole(p, screw_pass_d, panel_t + edge_t + 1);   // en el aro la cabeza apoya en su cara superior
         // ventanas de conectores (el cable sale hacia el interior)
@@ -367,8 +406,8 @@ module holder(v = "A", is_top = false) {
             cube([c[2] + 2 * conn_margin, c[3] + 2 * conn_margin, 30]);
         // imanes (piel en la cara de contacto)
         for (m = mags) translate([m[0], m[1], w1]) magnet_pocket_into(-1);
-        // inserto M3 del tornillo de seguridad (lateral)
-        if (!is_top) translate([0, z_screw - zc, w1 - insert_len - 0.5]) cylinder(d = insert_d, h = insert_len + 1);
+        // agujero guía del tornillo de seguridad (lateral): pasante, la punta del M3 llega justo a la cara inferior del refuerzo
+        if (!is_top) translate([safety_u, z_screw - zc, w1 - safety_len - 1]) cylinder(d = m3_tap_d, h = safety_len + 2, $fn = 24);
         // agujeros de los pasadores (superior)
         if (is_top) for (x = [-40, 40]) translate([x, 0, w0 - 1]) cylinder(d = peg_d + 2 * clear, h = 10);
     }
@@ -380,16 +419,18 @@ module holder(v = "A", is_top = false) {
 //  El marco solo ocupa la franja libre de componentes del borde (como la parte que apoya del aro escalonado).
 //  4 lengüetas llegan exactamente al borde de la PCB: si quedan cortas, la impresora imprime más pequeño (≈1 mm corta = 1 %).
 // =============================================================================
+// Grosor = edge_t (agarre bajo la cabeza, igual que el aro del portamatriz): con 2 mm el tornillo de 5 mm entraba 1 mm más
+// en la matriz que en el montaje real y podía tocar la máscara de los LED.
 module screw_template(v = "B") {
     difference() {
-        linear_extrude(2) union() {
+        linear_extrude(edge_t) union() {
             difference() { square(2 * edge_out, center = true); square(2 * edge_relief_in, center = true); }
             translate([-7, -edge_out]) square([14, 2 * edge_out]);        // viga central
             for (a = [0 : 90 : 270]) rotate(a) translate([edge_out - 1, -5]) square([panel_w / 2 - edge_out + 1, 10]);   // lengüetas al borde
         }
-        for (q = all_pts(v)) translate([0, 0, -1]) screw_slot_hole(q, screw_pass_d, 4);
+        for (q = all_pts(v)) translate([0, 0, -1]) screw_slot_hole(q, screw_pass_d, edge_t + 2);
         for (c = conns_of(v)) translate([back2u(c[0] + c[2]) - conn_margin, back2v(c[1]) - conn_margin, -1])
-            cube([c[2] + 2 * conn_margin, c[3] + 2 * conn_margin, 4]);
+            cube([c[2] + 2 * conn_margin, c[3] + 2 * conn_margin, edge_t + 2]);
     }
 }
 
@@ -403,18 +444,20 @@ module corner_column() {
             // poste estructural (entre los engrosamientos de la placa y del anillo)
             translate([sk - post_s, sk - post_s, bottom_t + plate_boss]) cube([post_s, post_s, ring_z - ring_boss - bottom_t - plate_boss]);
             // aleta diagonal (del poste a la arista exterior); no invade los engrosamientos de placa y anillo
-            translate([0, 0, max(trim_t, bottom_t + plate_boss)]) linear_extrude(ring_z - ring_boss - max(trim_t, bottom_t + plate_boss))
+            translate([0, 0, col_z0]) linear_extrude(ring_z - ring_boss - col_z0)
                 hull() { translate([sk, sk]) circle(d = fin_t);                 // espesor real = fin_t
                          translate([h2 - fin_t / 2, h2 - fin_t / 2]) circle(d = fin_t); }
-            // moldura: dos alas a ras de los LED
-            translate([0, 0, trim_t]) linear_extrude(H - 2 * trim_t) {
+            // moldura: dos alas a ras de los LED. Empieza a col_z0, como el poste y la aleta: así la columna apoya entera
+            // en la cama al imprimirla (antes el poste quedaba 1 mm en el aire y la columna de 193 mm se sostenía sobre 16 mm²)
+            translate([0, 0, col_z0]) linear_extrude(H - trim_t - col_z0) {
                 translate([panel_w / 2 + gap_g, h2 - mold_leg]) square([h2 - panel_w / 2 - gap_g, mold_leg]);
                 translate([h2 - mold_leg, panel_w / 2 + gap_g]) square([mold_leg, h2 - panel_w / 2 - gap_g]);
             }
         }
-        // insertos M3 en ambos extremos del poste
-        for (z = [bottom_t + plate_boss - eps, ring_z - ring_boss - insert_len - 0.5])
-            translate([post_c, post_c, z]) cylinder(d = insert_d, h = insert_len + 0.5 + eps);
+        // agujero guía en ambos extremos del poste: el M3 hace su propia rosca en el plástico. (12-nov) Antes eran insertos
+        // térmicos a 1.2 mm de los imanes de las columnas: el soldador (230 °C) los habría desimantado (N35: máx. ≈ 80 °C).
+        for (z = [col_z0 - eps, ring_z - ring_boss - m3_tap_len])
+            translate([post_c, post_c, z]) cylinder(d = m3_tap_d, h = m3_tap_len + eps, $fn = 24);
         // imanes en las dos caras exteriores del poste (piel hacia el portamatriz)
         for (z = z_mag) {
             // la columna se imprime de pie: arriba = +z (local -y en la primera, local -x en la segunda)
@@ -434,6 +477,11 @@ module bottom_plate() {
             translate([-h2, -h2, 0]) cube([W, W, bottom_t]);
             // labio exterior = moldura de las aristas inferiores (a ras de los LED)
             linear_extrude(trim_t) difference() { square(W, center = true); square(W - 2 * mold_leg, center = true); }
+            // en las esquinas el labio sube hasta col_z0, debajo de las alas de la moldura de cada columna
+            for (i = [0 : 3]) rotate(90 * i) translate([0, 0, trim_t - eps]) linear_extrude(col_z0 - trim_t + eps) {
+                translate([panel_w / 2 + gap_g, h2 - mold_leg]) square([h2 - panel_w / 2 - gap_g, mold_leg]);
+                translate([h2 - mold_leg, panel_w / 2 + gap_g]) square([mold_leg, h2 - panel_w / 2 - gap_g]);
+            }
             // rieles inferiores (las uñas de los portamatrices cuelgan de ellos)
             for (i = [0 : 3]) rotate(90 * i)
                 translate([-(sk - post_s - clear), sk - rail_t, 0]) cube([2 * (sk - post_s - clear), rail_t, rail_top_z]);
@@ -454,6 +502,9 @@ module bottom_plate() {
         for (i = [0 : 3]) rotate(90 * i) translate([0, sk, z_mag[0]]) rotate([-90, 0, 0]) magnet_pocket_into(-1, flat = [0, -1]);   // placa: arriba = +z
         // ranuras de ventilación (4 mm: no pasa un dedo)
         for (x = [-60 : 9 : 60]) translate([x - vent_slot_w / 2, -62, -1]) cube([vent_slot_w, 62, bottom_t + 2]);
+        // (18-nov) también debajo de la Raspberry Pi, entre sus dos filas de soportes (antes no había ventilación bajo ella)
+        for (x = [-60 : 9 : 60]) translate([x - vent_slot_w / 2, pi_origin[1] + pi_hole_inset_STD + 6, -1])
+            cube([vent_slot_w, pi_holes_STD[1] - 12, bottom_t + 2]);
         // taladros de la Pi
         for (x = [0, pi_holes_STD[0]], y = [0, pi_holes_STD[1]])
             translate([pi_origin[0] + pi_hole_inset_STD + x, pi_origin[1] + pi_hole_inset_STD + y, 1])
@@ -484,6 +535,9 @@ module top_ring() {
                 cube([post_s, post_s, ring_boss + eps]);
             // pasadores para la matriz superior
             for (x = [-40, 40]) translate([x, 0, H - D - eps]) cylinder(d = peg_d, h = peg_h);
+            // refuerzos bajo los imanes de la cara superior: el anillo mide 3 mm y el hueco (piel + imán) 2.8 mm, así que
+            // por debajo quedaba una sola capa de 0.2 mm cerrando el imán (en las esquinas ya lo cubre el engrosamiento del poste)
+            for (m = top_mag) translate([m[0], m[1], ring_z - ring_mag_boss]) cylinder(d = 8.8, h = ring_mag_boss + eps);
             // rieles superiores de las caras laterales (reciben imán y tornillo de seguridad)
             for (i = [0 : 3]) rotate(90 * i)
                 translate([-(sk - post_s - clear), sk - rail_t, ring_z - rail_top_len]) cube([2 * (sk - post_s - clear), rail_t, rail_top_len + eps]);
@@ -519,8 +573,30 @@ module top_ring() {
             // en coordenadas de cara u = -x: el imán sigue al del portamatriz (desplazado en la variante A)
             // el anillo se imprime boca abajo: arriba al imprimir = -z del montaje = local +y
             translate([-mag_top_u(side_variants[i]), sk, z_mag[2]]) rotate([-90, 0, 0]) magnet_pocket_into(-1, flat = [0, 1]);
-            translate([0, sk + 1, z_screw]) rotate([90, 0, 0]) cylinder(d = m3_clear, h = rail_t + 2);
+            // agujero holgado, centrado con la cara colgada: cuelga de las uñas `clear` (0.4 mm) por debajo de su posición nominal.
+            // (18-nov) Ranura vertical de ±safety_slot: la altura del agujero de la cara viene de medidas en XY del portamatriz y la del
+            // riel de medidas en Z (columnas); si la impresora encoge un 0.5 % en XY, quedan ≈0.85 mm desalineados (el agujero solo daba ±0.6)
+            // (18-nov, 2) La ranura de ±1 y 4.2 mm dejaba a la cabeza Ø5.5 solo 3.4 mm² de apoyo (redondo: 9.9). Ahora 3.8 mm de ancho y
+            // alargada solo hacia abajo (el encogimiento baja el agujero de la cara): 8.6 mm² de apoyo, sin arandela (el usuario no las quiere)
+            hull() for (dz = [-safety_slot, 0])
+                translate([-safety_u, sk + 1, z_screw - clear + dz]) rotate([90, 0, 0]) cylinder(d = safety_hole_d, h = rail_t + 2);
         }
+        // (12-nov) Muescas en los rieles detrás de las ventanas de conectores de cada cara lateral (las mismas medidas, ±conn_margin).
+        // El riel apoya en la cara trasera del portamatriz: tapaba los HUB75 y la alimentación de A, y 13 mm de los HUB75 de B, y el
+        // enchufe con su cable chocaba con él. Por la muesca el cable sale recto hacia el interior, mida lo que mida el enchufe.
+        for (i = [0 : 3]) rotate(90 * i) for (c = conns_of(side_variants[i])) {
+            lim = sk - post_s - 12;                  // si la muesca deja menos de 12 mm de riel hasta su extremo, llega hasta el extremo
+                                                     // (con 3 quedaba en A un trozo de 8 × 4 × 33 mm que no sujetaba nada y se podía romper)
+            u0 = back2u(c[0] + c[2]) - conn_margin;  u1 = back2u(c[0]) + conn_margin;
+            a0 = u0 < -lim ? -(sk - post_s - 0.2) : u0;  a1 = u1 > lim ? sk - post_s - 0.2 : u1;   // sin tocar el engrosamiento del poste
+            if (back2v(c[1] + c[3]) + conn_margin + zc > ring_z - rail_top_len)
+                translate([-a1, sk - rail_t - 0.05, ring_z - rail_top_len - 1]) cube([a1 - a0, rail_t + 1, rail_top_len + 1]);   // u = -x
+        }
+        // (12-nov) Lo mismo bajo la cara superior: el anillo queda abierto bajo cada ventana de conector del portamatriz superior,
+        // en sus dos posiciones (giro de 180°). Antes la cruz del anillo quedaba bajo el conector de alimentación de B.
+        for (r = [0, 180]) rotate(r) for (c = conns_of("B"))
+            translate([back2u(c[0] + c[2]) - conn_margin, back2v(c[1]) - conn_margin, ring_z - ring_mag_boss - 1])
+                cube([c[2] + 2 * conn_margin, c[3] + 2 * conn_margin, ring_t + ring_mag_boss + 2]);
     }
 }
 // Región en cuña que corta las molduras superiores en inglete a 45°
@@ -534,10 +610,13 @@ module miter_zone() {
 module calibration_coupon() {
     difference() {
         cube([84, 30, 8]);
-        for (i = [0 : 4]) translate([8 + i * 8, 8, 8 - magnet_skin - magnet_h - 0.2]) cylinder(d = magnet_d + 0.05 * i, h = magnet_h + 0.2);
-        for (i = [0 : 3]) translate([52 + i * 8, 8, 8 - insert_len - 0.5]) cylinder(d = insert_d - 0.2 + 0.1 * i, h = 10);
+        for (i = [0 : 4]) translate([8 + i * 8, 8, 8 - magnet_skin - magnet_h - 0.2]) cylinder(d = magnet_d + 0.1 + 0.1 * i, h = magnet_h + 0.2);   // imán 5.1 … 5.5 (el diseño usa 5.2)
+        // guía M3 (2.4 … 2.7; el diseño usa 2.6). Pasantes: con fondo, el M3×8 tocaba el fondo y cualquier agujero parecía firme
+        for (i = [0 : 3]) translate([52 + i * 8, 8, -1]) cylinder(d = m3_tap_d - 0.2 + 0.1 * i, h = 10, $fn = 24);
         for (i = [0 : 3]) translate([8 + i * 8, 22, -1]) cylinder(d = screw_pass_d - 0.2 + 0.1 * i, h = 10);     // paso tornillo original (1.3 … 1.6; el diseño usa screw_pass_d)
-        for (i = [0 : 3]) translate([52 + i * 8, 22, -1]) cylinder(d = peg_d + 0.2 * i, h = 10);         // pasador
+        for (i = [0 : 3]) translate([52 + i * 8, 22, -1]) cylinder(d = peg_d + 2 * clear - 0.4 + 0.2 * i, h = 10);   // pasador (4.4 … 5.0; el diseño usa 4.8)
+        // (12-nov) esquina cortada junto al hueco más pequeño: los pasos de 0.1 mm no se distinguen a simple vista
+        translate([0, 0, -1]) rotate(45) cube([6, 6, 20], center = true);
     }
 }
 
@@ -579,13 +658,19 @@ else if (view == "exploded")       assembly(explode);
 else if (view == "section")        difference() { assembly(0); translate([0, -500, -500]) cube(1000); }
 else if (view == "structure_only") structure(0);
 else if (view == "part_bottom_plate")  { bottom_plate(); bed_check("placa inferior", [W, W, rail_top_z]); }
-else if (view == "part_corner_column") { translate([-sk + post_s, -sk + post_s, -trim_t]) corner_column(); bed_check("columna", [h2 - sk + post_s, h2 - sk + post_s, H - 2 * trim_t]); }
-else if (view == "part_top_ring")      { translate([0, 0, H]) mirror([0, 0, 1]) top_ring(); bed_check("anillo superior", [W, W, H - ring_z + rail_top_len]); }
+else if (view == "part_corner_column") { translate([-sk + post_s, -sk + post_s, -col_z0]) corner_column(); bed_check("columna", [h2 - sk + post_s, h2 - sk + post_s, H - trim_t - col_z0]); }
+// (12-nov) Las vistas de impresión deben ser giros, nunca espejos: un espejo imprime la pieza "al revés" (como la mano izquierda
+// frente a la derecha) y no hay forma de girarla para que coincida. El anillo se voltea girándolo 180° sobre X (antes mirror).
+else if (view == "part_top_ring")      { translate([0, 0, H]) rotate([180, 0, 0]) top_ring(); bed_check("anillo superior", [W, W, H - ring_z + rail_top_len]); }
 // Portamatrices: se imprimen con la cara que toca la PCB sobre la cama (plana y precisa; asientos de tornillo hacia arriba).
 // Antes se imprimían con el marco abajo y las uñas quedaban 7.4 mm por debajo de la cama. Necesitan soportes bajo el marco.
-else if (view == "part_holder_side_A") { translate([0, 0, -panel_t]) holder("A", false); bed_check("portamatriz lateral", [2 * edge_out, edge_out - holder_v_lo, D + rail_t + clear + 3 - panel_t]); }
-else if (view == "part_holder_side_B") translate([0, 0, -panel_t]) holder("B", false);
-else if (view == "part_holder_top_A")  translate([0, 0, -panel_t]) holder("A", true);
-else if (view == "part_holder_top_B")  { translate([0, 0, -panel_t]) holder("B", true); bed_check("portamatriz superior", [2 * edge_out, 2 * edge_out, D - panel_t]); }
+// (12-nov) Las coordenadas de cara (u, v, w) son de mano izquierda (place_side y place_top tienen determinante −1): holder() y
+// screw_template() dibujados tal cual salían en espejo y las ventanas de conectores no coincidían con la matriz real.
+// mirror([1, 0, 0]) compensa: la pieza impresa es la del montaje girada (comprobado con blender/verificar_orientacion.py).
+else if (view == "part_holder_side_A") { translate([0, 0, -panel_t]) mirror([1, 0, 0]) holder("A", false); bed_check("portamatriz lateral", [2 * edge_out, edge_out - holder_v_lo, D + rail_t + hook_clear + 3 - panel_t]); }
+else if (view == "part_holder_side_B") translate([0, 0, -panel_t]) mirror([1, 0, 0]) holder("B", false);
+else if (view == "part_holder_top_A")  translate([0, 0, -panel_t]) mirror([1, 0, 0]) holder("A", true);
+else if (view == "part_holder_top_B")  { translate([0, 0, -panel_t]) mirror([1, 0, 0]) holder("B", true); bed_check("portamatriz superior", [2 * edge_out, 2 * edge_out, D - panel_t]); }
 else if (view == "part_calibration")   calibration_coupon();
-else if (view == "part_template")      { screw_template("B"); bed_check("plantilla de prueba", [panel_w, panel_w, 2]); }
+else if (view == "part_template_A")    { mirror([1, 0, 0]) screw_template("A"); bed_check("plantilla de prueba", [panel_w, panel_w, edge_t]); }
+else if (view == "part_template_B")    mirror([1, 0, 0]) screw_template("B");

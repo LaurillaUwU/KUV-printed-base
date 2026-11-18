@@ -12,7 +12,8 @@ bpy.ops.wm.read_factory_settings(use_empty=True)
 piezas = ["bottom_plate", "top_ring", "column_0", "column_1", "column_2", "column_3",
           "holder_side_0", "holder_side_1", "holder_side_2", "holder_side_3", "holder_top"]
 rutas = {p: stl / f"{p}.stl" for p in piezas}
-rutas["plantilla_prueba"] = base.parent / "imprimir" / "01_plantilla_prueba.stl"
+rutas["plantilla_prueba_A"] = base.parent / "imprimir" / "01a_plantilla_prueba_A.stl"
+rutas["plantilla_prueba_B"] = base.parent / "imprimir" / "01b_plantilla_prueba_B.stl"
 
 def islas(bm):
     seen, grupos = set(), []

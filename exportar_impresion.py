@@ -8,7 +8,8 @@ aqui = pathlib.Path(__file__).resolve().parent
 out = aqui / "imprimir"
 out.mkdir(exist_ok=True)
 piezas = [  # (archivo, vista de cubo_v1.scad)
-    ("01_plantilla_prueba.stl", "part_template"),
+    ("01a_plantilla_prueba_A.stl", "part_template_A"),   # cada matriz con su plantilla: también comprueba sus ventanas de conectores
+    ("01b_plantilla_prueba_B.stl", "part_template_B"),
     ("02_probeta_calibracion.stl", "part_calibration"),
     ("03_portamatriz_lateral_A.stl", "part_holder_side_A"),
     ("04_portamatriz_lateral_B.stl", "part_holder_side_B"),

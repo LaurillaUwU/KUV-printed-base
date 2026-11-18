@@ -16,14 +16,14 @@ mu0 = 4e-7 * math.pi
 aqui = pathlib.Path(__file__).resolve().parent
 stl_dir = aqui / "blender" / "stl"
 
-# ------------------------------------------------------------------ geometría (de cubo_v1.scad)
-h2 = 101.4e-3          # m, distancia del eje a la cara exterior (LED)
-zc = 101.4e-3          # m, altura del centro de la cara lateral
+# ------------------------------------------------------------------ geometría (de cubo_v1.scad)  — gap_g = 0.8 (cubo de 203.6 mm)
+h2 = 101.8e-3          # m, distancia del eje a la cara exterior (LED)
+zc = 101.8e-3          # m, altura del centro de la cara lateral
 D = 17e-3              # m, profundidad matriz -> cara trasera del portamatriz (= plano de los rieles)
 z_hook = 22e-3         # m, apoyo de la uña sobre el riel inferior (rail_top_z): eje de vuelco de la cara
-z_mag = [12e-3, 101.4e-3, 174.8e-3]   # filas de imanes (abajo, centro, arriba)
-z_m3 = 164.8e-3        # tornillo M3 de seguridad
-z_top_edge = 197.4e-3  # borde superior de la matriz
+z_mag = [12e-3, 101.8e-3, 175.6e-3]   # filas de imanes (abajo, centro, arriba)
+z_m3 = 176.6e-3        # tornillo M3 de seguridad (z_screw = ring_z - frame_bar/2 desde el 11-nov; con gap_g = 0.8 desde el 12-nov)
+z_top_edge = 197.8e-3  # borde superior de la matriz
 n_pcb_screws = 14
 
 # ------------------------------------------------------------------ datos y escenarios
@@ -127,13 +127,13 @@ cases = {
     "golpe al transportarlo tumbado (2 g hacia fuera)": 2 * W * (z_cg - z_hook),
     "alguien tira del borde superior con 20 N (ESCENARIO)": 20 * (z_top_edge - z_hook),
 }
-F_m3_cap = 200.0     # N, SUPUESTO conservador: arranque de inserto térmico M3 en PETG (ensayos típicos 500–900 N)
+F_m3_cap = 150.0     # N, SUPUESTO conservador: arranque de un M3 roscado 4 mm en PETG (12-nov: sin inserto; ensayos típicos 300–600 N)
 print()
 print("=" * 110)
 print("3) CARA LATERAL: ¿se despega la parte alta? (momentos respecto a la uña, N·m)")
 print("=" * 110)
 Fn = F_par["imanes al fondo del bolsillo 1.6 mm"]["N35"]     # caso de diseño: N35 y holgura de bolsillo
-print(f"  Imanes de diseño: N35 a 1.6 mm = {Fn:.2f} N por pareja. M3: {F_m3_cap:.0f} N (inserto) a {(z_m3 - z_hook)*1000:.0f} mm del eje.")
+print(f"  Imanes de diseño: N35 a 1.6 mm = {Fn:.2f} N por pareja. M3: {F_m3_cap:.0f} N (roscado en el plástico) a {(z_m3 - z_hook)*1000:.0f} mm del eje.")
 resumen = []
 for var, fl in filas.items():
     M_mag = momento_imanes(Fn, fl)
@@ -147,12 +147,14 @@ for var, fl in filas.items():
 
 print()
 print("=" * 110)
-print("4) CARA SUPERIOR: con el cubo boca abajo, ¿la sujetan los 8 imanes?")
+print("4) CARA SUPERIOR: con el cubo boca abajo, ¿la sujetan los 16 imanes? (8 hasta el 11-nov)")
 print("=" * 110)
 m_top = m_panel + m_t
 print(f"  portamatriz superior {m_t*1000:.0f} g + matriz {m_panel*1000:.0f} g = {m_top*1000:.0f} g; peso {m_top*g:.2f} N")
 for nombre, gp in gaps.items():
-    linea(f"  8 imanes N35, {nombre}", 8 * F_par[nombre]["N35"], m_top * g, "N")
+    for n in (8, 16):
+        linea(f"  {n} imanes N35, {nombre}", n * F_par[nombre]["N35"], m_top * g, "N")
+    linea(f"  16 imanes N35, {nombre}, golpe de 2 g boca abajo", 16 * F_par[nombre]["N35"], 2 * m_top * g, "N")
 print("  En uso normal la sujeta la gravedad y los 2 pasadores impiden que deslice; la centrífuga es radial (en su plano).")
 
 print()

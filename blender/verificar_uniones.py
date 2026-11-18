@@ -21,9 +21,9 @@ def cortes(t, x, y, z0, dz):
         if h[0] is None: return zs
         zs.append(round(h[0].z, 2)); o = h[0] + d * 0.01
 
-post_c = 78.4
-for r in (1.0, 2.6):           # dentro del paso M3 (r < 1.7) y bajo la cabeza (1.7 < r < 3.1)
+post_c = 78.8                  # sk - post_s/2 con gap_g = 0.8 (cubo de 203.6 mm)
+for r in (1.0, 2.6):           # dentro del paso M3 (r < 1.8) y bajo la cabeza (1.7 < r < 3.1)
     x, y = post_c + r, post_c
     print(f"Anillo superior, rayo hacia abajo a r = {r} mm del tornillo: superficies en z = {cortes(arbol('top_ring'), x, y, 300, -1)}")
     print(f"Placa inferior,  rayo hacia arriba a r = {r} mm del tornillo: superficies en z = {cortes(arbol('bottom_plate'), x, y, -10, 1)}")
-print("Referencia: anillo de z = 182.8 a 185.8 (3 mm); placa de z = 0 a 4. Sin superficies a r = 2.6 => no queda material bajo la cabeza.")
+print("Referencia: anillo de z = 183.6 a 186.6 (3 mm); placa de z = 0 a 4. Sin superficies a r = 2.6 => no queda material bajo la cabeza.")

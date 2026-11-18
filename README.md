@@ -10,7 +10,7 @@ El cubo gira sobre una base con un motor a pasos; dentro va una Raspberry Pi 4.
 **Versión 1: solo el cubo** (estructura impresa en 3D que sujeta las matrices). La base, el motor, el anillo deslizante
 y la electrónica todavía no están diseñados.
 
-- Diseño completo y verificado por ordenador: sin piezas sueltas, sin interferencias entre piezas, los 80 imanes con su pareja
+- Diseño completo y verificado por ordenador: sin piezas sueltas, sin interferencias entre piezas, los 96 imanes con su pareja
   y el orden de armado comprobado.
 - Pendiente: imprimir la plantilla y la probeta de calibración y probarlas con las matrices reales antes de imprimir el resto.
 
@@ -19,18 +19,18 @@ y la electrónica todavía no están diseñados.
 - **11 piezas impresas** (PETG): placa inferior, 4 columnas de esquina, anillo superior y 5 portamatrices
   (3 laterales variante A, 1 lateral variante B, 1 superior variante B).
 - Cada matriz se atornilla a su portamatriz con sus **14 tornillos originales**. Las caras laterales cuelgan de un riel con dos uñas
-  y se sujetan con **8 imanes** de 5 × 2 mm y un **tornillo M3 de seguridad**; la cara superior apoya sobre el anillo con 2 pasadores y 8 imanes.
+  y se sujetan con **8 imanes** de 5 × 2 mm y un **tornillo M3 de seguridad**; la cara superior apoya sobre el anillo con 2 pasadores y 16 imanes.
 - Cálculos de resistencia de imanes y tornillos en [`calculos_retencion.py`](calculos_retencion.py).
 
 ## Imprimir y armar
 
-Impresora necesaria: cama de al menos **205 × 205 mm** y altura de al menos **195 mm** (la placa y el anillo miden 203 mm; las columnas, 193 mm de alto).
+Impresora necesaria: cama de al menos **205 × 205 mm** y altura de al menos **195 mm** (la placa y el anillo miden 203.6 mm; las columnas, 193 mm de alto).
 
 Los archivos listos para el slicer y la guía paso a paso (ajustes, pausas para meter los imanes, polaridad, orden de impresión
 y armado) están en [`imprimir/`](imprimir/INSTRUCCIONES.md).
 
-Además de las piezas impresas hacen falta: 80 imanes de neodimio 5 × 2 mm (N52 recomendado), 12 tornillos M3×8 Allen,
-12 insertos térmicos M3 (Ø4.0 × 5.7 mm) y 4 tornillos M2.5×6 autorroscantes para la Raspberry Pi.
+Además de las piezas impresas hacen falta: 96 imanes de neodimio 5 × 2 mm (N35; más 5 para la probeta), 12 tornillos M3×8 Allen,
+y 4 tornillos M2.5×6 autorroscantes para la Raspberry Pi. Sin insertos térmicos: los M3 hacen su propia rosca en el plástico.
 
 ## Archivos
 
